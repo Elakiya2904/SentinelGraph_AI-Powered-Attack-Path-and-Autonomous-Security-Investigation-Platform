@@ -1,0 +1,10 @@
+{
+  "entry": "main.typ",
+  "metadata": {
+    "author": "Manus AI",
+    "subtitle": "Findings, prediction metrics, deployment readiness, and lab validation",
+    "title": "SentinelGraph Security Audit Report"
+  },
+  "mode": "report",
+  "theme": "report-theme.typ"
+}

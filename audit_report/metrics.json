@@ -1,0 +1,1849 @@
+{
+  "health": {
+    "status": "ok",
+    "phase": "5-simulation-prediction",
+    "queue_depth": "0",
+    "investigation_status": "idle"
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "internet",
+        "kind": "entry",
+        "label": "Internet",
+        "entry_point": true,
+        "crown_jewel": false,
+        "privilege_level": 0,
+        "description": "Synthetic external entry point; not a routable external target."
+      },
+      {
+        "id": "edge-gateway",
+        "kind": "host",
+        "label": "Edge gateway",
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 1,
+        "services": [
+          "https:443",
+          "ssh:22"
+        ],
+        "description": "Public-facing gateway in the isolated lab network."
+      },
+      {
+        "id": "vpn-bastion",
+        "kind": "host",
+        "label": "VPN bastion",
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 2,
+        "services": [
+          "ssh:22"
+        ],
+        "vulnerabilities": [
+          {
+            "id": "CVE-2024-3400",
+            "severity": 9.8,
+            "epss": 0.91,
+            "kev": true
+          }
+        ],
+        "description": "Bastion host with a known high-impact edge vulnerability."
+      },
+      {
+        "id": "intern-laptop",
+        "kind": "host",
+        "label": "Intern laptop",
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 1,
+        "services": [
+          "smb:445",
+          "ssh:22"
+        ],
+        "vulnerabilities": [
+          {
+            "id": "CVE-2023-23397",
+            "severity": 9.8,
+            "epss": 0.72,
+            "kev": true
+          }
+        ],
+        "description": "Workstation with a simulated credential exposure weakness."
+      },
+      {
+        "id": "corp-user",
+        "kind": "user",
+        "label": "corp\\analyst",
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 1,
+        "description": "Low-privilege identity used by the synthetic workstation."
+      },
+      {
+        "id": "web-portal",
+        "kind": "service",
+        "label": "Web portal",
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 2,
+        "services": [
+          "http:8080"
+        ],
+        "vulnerabilities": [
+          {
+            "id": "CVE-2021-44228",
+            "severity": 10.0,
+            "epss": 0.94,
+            "kev": true
+          }
+        ],
+        "description": "Application service with a simulated vulnerable dependency."
+      },
+      {
+        "id": "admin-role",
+        "kind": "role",
+        "label": "App admin role",
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 3,
+        "description": "IAM-style role with access to application infrastructure."
+      },
+      {
+        "id": "app-server",
+        "kind": "host",
+        "label": "Application server",
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 3,
+        "services": [
+          "http:8080",
+          "ssh:22"
+        ],
+        "description": "Shared application tier and path junction."
+      },
+      {
+        "id": "backup-service",
+        "kind": "service",
+        "label": "Backup service",
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 3,
+        "services": [
+          "https:8443"
+        ],
+        "vulnerabilities": [
+          {
+            "id": "CVE-2024-3094",
+            "severity": 10.0,
+            "epss": 0.62,
+            "kev": false
+          }
+        ],
+        "description": "Service that can reach the production database for backups."
+      },
+      {
+        "id": "prod-db",
+        "kind": "crown",
+        "label": "Production database",
+        "entry_point": false,
+        "crown_jewel": true,
+        "privilege_level": 4,
+        "services": [
+          "postgres:5432"
+        ],
+        "description": "Synthetic crown jewel containing customer records."
+      },
+      {
+        "id": "secrets-vault",
+        "kind": "crown",
+        "label": "Secrets vault",
+        "entry_point": false,
+        "crown_jewel": true,
+        "privilege_level": 4,
+        "services": [
+          "vault:8200"
+        ],
+        "description": "Synthetic crown jewel containing deployment credentials."
+      },
+      {
+        "id": "vuln-vpn-bastion-cve-2024-3400",
+        "kind": "vulnerability",
+        "label": "CVE-2024-3400",
+        "vulnerability_id": "CVE-2024-3400",
+        "severity": 9.8,
+        "epss": 0.91,
+        "kev": true,
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 2,
+        "description": "CVE-2024-3400 on VPN bastion."
+      },
+      {
+        "id": "vuln-intern-laptop-cve-2023-23397",
+        "kind": "vulnerability",
+        "label": "CVE-2023-23397",
+        "vulnerability_id": "CVE-2023-23397",
+        "severity": 9.8,
+        "epss": 0.72,
+        "kev": true,
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 1,
+        "description": "CVE-2023-23397 on Intern laptop."
+      },
+      {
+        "id": "vuln-web-portal-cve-2021-44228",
+        "kind": "vulnerability",
+        "label": "CVE-2021-44228",
+        "vulnerability_id": "CVE-2021-44228",
+        "severity": 10.0,
+        "epss": 0.94,
+        "kev": true,
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 2,
+        "description": "CVE-2021-44228 on Web portal."
+      },
+      {
+        "id": "vuln-backup-service-cve-2024-3094",
+        "kind": "vulnerability",
+        "label": "CVE-2024-3094",
+        "vulnerability_id": "CVE-2024-3094",
+        "severity": 10.0,
+        "epss": 0.62,
+        "kev": false,
+        "entry_point": false,
+        "crown_jewel": false,
+        "privilege_level": 3,
+        "description": "CVE-2024-3094 on Backup service."
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-internet-edge-gateway",
+        "source": "internet",
+        "target": "edge-gateway",
+        "edge_type": "CAN_REACH",
+        "port": 443
+      },
+      {
+        "id": "edge-edge-gateway-vpn-bastion",
+        "source": "edge-gateway",
+        "target": "vpn-bastion",
+        "edge_type": "CAN_REACH",
+        "port": 22
+      },
+      {
+        "id": "edge-edge-gateway-intern-laptop",
+        "source": "edge-gateway",
+        "target": "intern-laptop",
+        "edge_type": "CAN_REACH",
+        "port": 445
+      },
+      {
+        "id": "edge-vpn-bastion-web-portal",
+        "source": "vpn-bastion",
+        "target": "web-portal",
+        "edge_type": "CAN_REACH",
+        "port": 8080
+      },
+      {
+        "id": "edge-vpn-bastion-admin-role",
+        "source": "vpn-bastion",
+        "target": "admin-role",
+        "edge_type": "CAN_ASSUME",
+        "reason": "CVE-2024-3400"
+      },
+      {
+        "id": "edge-vpn-bastion-vuln-vpn-bastion-cve-2024-3400",
+        "source": "vpn-bastion",
+        "target": "vuln-vpn-bastion-cve-2024-3400",
+        "edge_type": "HAS_VULN",
+        "vulnerability_id": "CVE-2024-3400"
+      },
+      {
+        "id": "edge-intern-laptop-corp-user",
+        "source": "intern-laptop",
+        "target": "corp-user",
+        "edge_type": "CAN_ASSUME",
+        "reason": "CVE-2023-23397"
+      },
+      {
+        "id": "edge-intern-laptop-web-portal",
+        "source": "intern-laptop",
+        "target": "web-portal",
+        "edge_type": "CAN_REACH",
+        "port": 8080
+      },
+      {
+        "id": "edge-intern-laptop-admin-role",
+        "source": "intern-laptop",
+        "target": "admin-role",
+        "edge_type": "CAN_ASSUME",
+        "reason": "captured session token"
+      },
+      {
+        "id": "edge-intern-laptop-vuln-intern-laptop-cve-2023-23397",
+        "source": "intern-laptop",
+        "target": "vuln-intern-laptop-cve-2023-23397",
+        "edge_type": "HAS_VULN",
+        "vulnerability_id": "CVE-2023-23397"
+      },
+      {
+        "id": "edge-corp-user-intern-laptop",
+        "source": "corp-user",
+        "target": "intern-laptop",
+        "edge_type": "HAS_ACCESS_TO",
+        "reason": "primary workstation"
+      },
+      {
+        "id": "edge-web-portal-admin-role",
+        "source": "web-portal",
+        "target": "admin-role",
+        "edge_type": "CAN_ASSUME",
+        "reason": "CVE-2021-44228"
+      },
+      {
+        "id": "edge-web-portal-app-server",
+        "source": "web-portal",
+        "target": "app-server",
+        "edge_type": "HAS_ACCESS_TO",
+        "reason": "service network policy"
+      },
+      {
+        "id": "edge-web-portal-vuln-web-portal-cve-2021-44228",
+        "source": "web-portal",
+        "target": "vuln-web-portal-cve-2021-44228",
+        "edge_type": "HAS_VULN",
+        "vulnerability_id": "CVE-2021-44228"
+      },
+      {
+        "id": "edge-admin-role-app-server",
+        "source": "admin-role",
+        "target": "app-server",
+        "edge_type": "HAS_ACCESS_TO",
+        "reason": "IAM policy app-admin"
+      },
+      {
+        "id": "edge-admin-role-secrets-vault",
+        "source": "admin-role",
+        "target": "secrets-vault",
+        "edge_type": "HAS_ACCESS_TO",
+        "reason": "deployment read policy"
+      },
+      {
+        "id": "edge-app-server-prod-db",
+        "source": "app-server",
+        "target": "prod-db",
+        "edge_type": "HAS_ACCESS_TO",
+        "port": 5432
+      },
+      {
+        "id": "edge-app-server-secrets-vault",
+        "source": "app-server",
+        "target": "secrets-vault",
+        "edge_type": "HAS_ACCESS_TO",
+        "port": 8200
+      },
+      {
+        "id": "edge-app-server-backup-service",
+        "source": "app-server",
+        "target": "backup-service",
+        "edge_type": "HAS_ACCESS_TO",
+        "port": 8443
+      },
+      {
+        "id": "edge-backup-service-prod-db",
+        "source": "backup-service",
+        "target": "prod-db",
+        "edge_type": "HAS_ACCESS_TO",
+        "reason": "backup replication"
+      },
+      {
+        "id": "edge-backup-service-vuln-backup-service-cve-2024-3094",
+        "source": "backup-service",
+        "target": "vuln-backup-service-cve-2024-3094",
+        "edge_type": "HAS_VULN",
+        "vulnerability_id": "CVE-2024-3094"
+      }
+    ],
+    "paths": [
+      {
+        "path_id": "path-01",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "web-portal",
+          "admin-role",
+          "app-server",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.972
+      },
+      {
+        "path_id": "path-02",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "web-portal",
+          "admin-role",
+          "app-server",
+          "backup-service",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "backup-service",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "backup-service",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.893
+      },
+      {
+        "path_id": "path-03",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "web-portal",
+          "app-server",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.972
+      },
+      {
+        "path_id": "path-04",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "web-portal",
+          "app-server",
+          "backup-service",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "backup-service",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "backup-service",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.893
+      },
+      {
+        "path_id": "path-05",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "admin-role",
+          "app-server",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.962
+      },
+      {
+        "path_id": "path-06",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "admin-role",
+          "app-server",
+          "backup-service",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "backup-service",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "backup-service",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.849
+      },
+      {
+        "path_id": "path-07",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "web-portal",
+          "admin-role",
+          "app-server",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2023-23397"
+        ],
+        "likelihood": 0.944
+      },
+      {
+        "path_id": "path-08",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "web-portal",
+          "admin-role",
+          "app-server",
+          "backup-service",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "backup-service",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "backup-service",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094"
+        ],
+        "likelihood": 0.874
+      },
+      {
+        "path_id": "path-09",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "web-portal",
+          "app-server",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2023-23397"
+        ],
+        "likelihood": 0.944
+      },
+      {
+        "path_id": "path-10",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "web-portal",
+          "app-server",
+          "backup-service",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "backup-service",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "backup-service",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094"
+        ],
+        "likelihood": 0.874
+      },
+      {
+        "path_id": "path-11",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "admin-role",
+          "app-server",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2023-23397"
+        ],
+        "likelihood": 0.905
+      },
+      {
+        "path_id": "path-12",
+        "entry_point": "internet",
+        "crown_jewel": "prod-db",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "admin-role",
+          "app-server",
+          "backup-service",
+          "prod-db"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "backup-service",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "backup-service",
+            "target": "prod-db",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2023-23397",
+          "CVE-2024-3094"
+        ],
+        "likelihood": 0.821
+      },
+      {
+        "path_id": "path-13",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "web-portal",
+          "admin-role",
+          "app-server",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.972
+      },
+      {
+        "path_id": "path-14",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "web-portal",
+          "admin-role",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.972
+      },
+      {
+        "path_id": "path-15",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "web-portal",
+          "app-server",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.972
+      },
+      {
+        "path_id": "path-16",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "admin-role",
+          "app-server",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.962
+      },
+      {
+        "path_id": "path-17",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "vpn-bastion",
+          "admin-role",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "vpn-bastion",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "vpn-bastion",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2024-3400"
+        ],
+        "likelihood": 0.962
+      },
+      {
+        "path_id": "path-18",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "web-portal",
+          "admin-role",
+          "app-server",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2023-23397"
+        ],
+        "likelihood": 0.944
+      },
+      {
+        "path_id": "path-19",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "web-portal",
+          "admin-role",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2023-23397"
+        ],
+        "likelihood": 0.944
+      },
+      {
+        "path_id": "path-20",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "web-portal",
+          "app-server",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "web-portal",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "web-portal",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2021-44228",
+          "CVE-2023-23397"
+        ],
+        "likelihood": 0.944
+      },
+      {
+        "path_id": "path-21",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "admin-role",
+          "app-server",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "app-server",
+            "type": "HAS_ACCESS_TO"
+          },
+          {
+            "source": "app-server",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2023-23397"
+        ],
+        "likelihood": 0.905
+      },
+      {
+        "path_id": "path-22",
+        "entry_point": "internet",
+        "crown_jewel": "secrets-vault",
+        "nodes": [
+          "internet",
+          "edge-gateway",
+          "intern-laptop",
+          "admin-role",
+          "secrets-vault"
+        ],
+        "edges": [
+          {
+            "source": "internet",
+            "target": "edge-gateway",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "edge-gateway",
+            "target": "intern-laptop",
+            "type": "CAN_REACH"
+          },
+          {
+            "source": "intern-laptop",
+            "target": "admin-role",
+            "type": "CAN_ASSUME"
+          },
+          {
+            "source": "admin-role",
+            "target": "secrets-vault",
+            "type": "HAS_ACCESS_TO"
+          }
+        ],
+        "weakness_ids": [
+          "CVE-2023-23397"
+        ],
+        "likelihood": 0.905
+      }
+    ],
+    "entry_points": [
+      "internet"
+    ],
+    "crown_jewels": [
+      "prod-db",
+      "secrets-vault"
+    ],
+    "choke_points": [
+      {
+        "id": "edge-gateway",
+        "label": "Edge gateway",
+        "kind": "host",
+        "path_count": 22,
+        "total_paths": 22,
+        "coverage": 1.0,
+        "betweenness": 0.071,
+        "path_ids": [
+          "path-01",
+          "path-02",
+          "path-03",
+          "path-04",
+          "path-05",
+          "path-06",
+          "path-07",
+          "path-08",
+          "path-09",
+          "path-10",
+          "path-11",
+          "path-12",
+          "path-13",
+          "path-14",
+          "path-15",
+          "path-16",
+          "path-17",
+          "path-18",
+          "path-19",
+          "path-20",
+          "path-21",
+          "path-22"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "reason": "22 of 22 attack paths pass through Edge gateway."
+      },
+      {
+        "id": "internet",
+        "label": "Internet",
+        "kind": "entry",
+        "path_count": 22,
+        "total_paths": 22,
+        "coverage": 1.0,
+        "betweenness": 0.0,
+        "path_ids": [
+          "path-01",
+          "path-02",
+          "path-03",
+          "path-04",
+          "path-05",
+          "path-06",
+          "path-07",
+          "path-08",
+          "path-09",
+          "path-10",
+          "path-11",
+          "path-12",
+          "path-13",
+          "path-14",
+          "path-15",
+          "path-16",
+          "path-17",
+          "path-18",
+          "path-19",
+          "path-20",
+          "path-21",
+          "path-22"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "reason": "22 of 22 attack paths pass through Internet."
+      },
+      {
+        "id": "app-server",
+        "label": "Application server",
+        "kind": "host",
+        "path_count": 18,
+        "total_paths": 22,
+        "coverage": 0.818,
+        "betweenness": 0.118,
+        "path_ids": [
+          "path-01",
+          "path-02",
+          "path-03",
+          "path-04",
+          "path-05",
+          "path-06",
+          "path-07",
+          "path-08",
+          "path-09",
+          "path-10",
+          "path-11",
+          "path-12",
+          "path-13",
+          "path-15",
+          "path-16",
+          "path-18",
+          "path-20",
+          "path-21"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "reason": "18 of 22 attack paths pass through Application server."
+      },
+      {
+        "id": "admin-role",
+        "label": "App admin role",
+        "kind": "role",
+        "path_count": 16,
+        "total_paths": 22,
+        "coverage": 0.727,
+        "betweenness": 0.085,
+        "path_ids": [
+          "path-01",
+          "path-02",
+          "path-05",
+          "path-06",
+          "path-07",
+          "path-08",
+          "path-11",
+          "path-12",
+          "path-13",
+          "path-14",
+          "path-16",
+          "path-17",
+          "path-18",
+          "path-19",
+          "path-21",
+          "path-22"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "reason": "16 of 22 attack paths pass through App admin role."
+      },
+      {
+        "id": "web-portal",
+        "label": "Web portal",
+        "kind": "service",
+        "path_count": 14,
+        "total_paths": 22,
+        "coverage": 0.636,
+        "betweenness": 0.082,
+        "path_ids": [
+          "path-01",
+          "path-02",
+          "path-03",
+          "path-04",
+          "path-07",
+          "path-08",
+          "path-09",
+          "path-10",
+          "path-13",
+          "path-14",
+          "path-15",
+          "path-18",
+          "path-19",
+          "path-20"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "reason": "14 of 22 attack paths pass through Web portal."
+      },
+      {
+        "id": "prod-db",
+        "label": "Production database",
+        "kind": "crown",
+        "path_count": 12,
+        "total_paths": 22,
+        "coverage": 0.545,
+        "betweenness": 0.0,
+        "path_ids": [
+          "path-01",
+          "path-02",
+          "path-03",
+          "path-04",
+          "path-05",
+          "path-06",
+          "path-07",
+          "path-08",
+          "path-09",
+          "path-10",
+          "path-11",
+          "path-12"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "reason": "12 of 22 attack paths pass through Production database."
+      },
+      {
+        "id": "intern-laptop",
+        "label": "Intern laptop",
+        "kind": "host",
+        "path_count": 11,
+        "total_paths": 22,
+        "coverage": 0.5,
+        "betweenness": 0.115,
+        "path_ids": [
+          "path-07",
+          "path-08",
+          "path-09",
+          "path-10",
+          "path-11",
+          "path-12",
+          "path-18",
+          "path-19",
+          "path-20",
+          "path-21",
+          "path-22"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094"
+        ],
+        "reason": "11 of 22 attack paths pass through Intern laptop."
+      },
+      {
+        "id": "vpn-bastion",
+        "label": "VPN bastion",
+        "kind": "host",
+        "path_count": 11,
+        "total_paths": 22,
+        "coverage": 0.5,
+        "betweenness": 0.055,
+        "path_ids": [
+          "path-01",
+          "path-02",
+          "path-03",
+          "path-04",
+          "path-05",
+          "path-06",
+          "path-13",
+          "path-14",
+          "path-15",
+          "path-16",
+          "path-17"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "reason": "11 of 22 attack paths pass through VPN bastion."
+      },
+      {
+        "id": "secrets-vault",
+        "label": "Secrets vault",
+        "kind": "crown",
+        "path_count": 10,
+        "total_paths": 22,
+        "coverage": 0.455,
+        "betweenness": 0.0,
+        "path_ids": [
+          "path-13",
+          "path-14",
+          "path-15",
+          "path-16",
+          "path-17",
+          "path-18",
+          "path-19",
+          "path-20",
+          "path-21",
+          "path-22"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3400"
+        ],
+        "reason": "10 of 22 attack paths pass through Secrets vault."
+      },
+      {
+        "id": "backup-service",
+        "label": "Backup service",
+        "kind": "service",
+        "path_count": 6,
+        "total_paths": 22,
+        "coverage": 0.273,
+        "betweenness": 0.044,
+        "path_ids": [
+          "path-02",
+          "path-04",
+          "path-06",
+          "path-08",
+          "path-10",
+          "path-12"
+        ],
+        "weaknesses": [
+          "CVE-2021-44228",
+          "CVE-2023-23397",
+          "CVE-2024-3094",
+          "CVE-2024-3400"
+        ],
+        "reason": "6 of 22 attack paths pass through Backup service."
+      }
+    ],
+    "risk": {
+      "score": 85,
+      "path_count": 22,
+      "average_path_likelihood": 0.927,
+      "formula": "min(100, (paths / 24) \u00d7 average weighted path likelihood \u00d7 100)"
+    },
+    "metadata": {
+      "environment": "synthetic-isolated-lab",
+      "graph_engine": "NetworkX",
+      "real_vs_simulated": "Environment data and attack paths are simulated in Phase 1; no external targets are contacted."
+    }
+  },
+  "prediction": {
+    "source_host": "victim",
+    "compromised_node": "vpn-bastion",
+    "foothold_privilege": 2,
+    "candidates": [
+      {
+        "node_id": "backup-service",
+        "label": "Backup service",
+        "kind": "service",
+        "score": 0.669,
+        "score_percent": 66.9,
+        "components": {
+          "exploitability": 0.736,
+          "privilege_gain": 0.25,
+          "proximity_to_crown_jewel": 1.0
+        },
+        "reasons": [
+          "high exploitability signal",
+          "increases privilege over the foothold",
+          "close to a crown jewel"
+        ],
+        "likely_techniques": [
+          {
+            "id": "T1021",
+            "name": "Remote Services"
+          },
+          {
+            "id": "T1190",
+            "name": "Exploit Public-Facing Application"
+          }
+        ]
+      },
+      {
+        "node_id": "web-portal",
+        "label": "Web portal",
+        "kind": "service",
+        "score": 0.543,
+        "score_percent": 54.3,
+        "components": {
+          "exploitability": 0.982,
+          "privilege_gain": 0.0,
+          "proximity_to_crown_jewel": 0.5
+        },
+        "reasons": [
+          "high exploitability signal",
+          "close to a crown jewel"
+        ],
+        "likely_techniques": [
+          {
+            "id": "T1021",
+            "name": "Remote Services"
+          },
+          {
+            "id": "T1190",
+            "name": "Exploit Public-Facing Application"
+          }
+        ]
+      },
+      {
+        "node_id": "admin-role",
+        "label": "App admin role",
+        "kind": "role",
+        "score": 0.515,
+        "score_percent": 51.5,
+        "components": {
+          "exploitability": 0.35,
+          "privilege_gain": 0.25,
+          "proximity_to_crown_jewel": 1.0
+        },
+        "reasons": [
+          "increases privilege over the foothold",
+          "close to a crown jewel"
+        ],
+        "likely_techniques": [
+          {
+            "id": "T1078",
+            "name": "Valid Accounts"
+          }
+        ]
+      }
+    ],
+    "formula": "score(c) = 0.4 \u00d7 exploitability(c) + 0.3 \u00d7 privilege_gain(c) + 0.3 \u00d7 proximity_to_crown_jewel(c)",
+    "weights": {
+      "exploitability": 0.4,
+      "privilege_gain": 0.3,
+      "proximity_to_crown_jewel": 0.3
+    },
+    "method": "graph-based, explainable ranking; no ML decisioning"
+  }
+}

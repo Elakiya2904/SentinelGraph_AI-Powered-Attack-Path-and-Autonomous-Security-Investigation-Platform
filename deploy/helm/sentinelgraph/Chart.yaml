@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sentinelgraph
+description: Explainable attack-path intelligence lab with FastAPI and React
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

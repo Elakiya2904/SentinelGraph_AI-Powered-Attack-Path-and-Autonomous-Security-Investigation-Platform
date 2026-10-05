@@ -1,0 +1,80 @@
+services:
+  platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - victim-logs:/logs:ro
+      - ./backend:/app/backend
+    networks:
+      sentinel-lab:
+        aliases:
+          - platform
+      default:
+        aliases:
+          - sentinelgraph-backend
+          - platform
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3000:8080"
+    depends_on:
+      - platform
+    networks:
+      - default
+
+  victim:
+    image: python:3.12-slim
+    command: python /app/victim/victim.py
+    volumes:
+      - victim-logs:/logs
+      - ./lab/victim:/app/victim:ro
+    expose:
+      - "2222"
+      - "8080"
+    networks:
+      - sentinel-lab
+
+  detector:
+    image: python:3.12-slim
+    command: python /app/detector/detector.py
+    environment:
+      VICTIM_LOG: /logs/victim.log
+      WEBHOOK_URL: http://platform:8000/alerts
+    volumes:
+      - victim-logs:/logs:ro
+      - ./lab/detector:/app/detector:ro
+    depends_on:
+      - platform
+      - victim
+    networks:
+      - sentinel-lab
+
+  attacker:
+    image: python:3.12-slim
+    command: python /app/attacker/attack.py
+    volumes:
+      - ./lab/attacker:/app/attacker:ro
+    depends_on:
+      - victim
+    profiles:
+      - demo
+    networks:
+      - sentinel-lab
+
+volumes:
+  victim-logs:
+
+networks:
+  default:
+  sentinel-lab:
+    internal: true

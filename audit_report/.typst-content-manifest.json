@@ -1,0 +1,11 @@
+{
+  "task_kind": "new-document",
+  "output": "pdf",
+  "signals": ["security-audit", "executive-report"],
+  "hard_constraints": ["comprehensive findings, prediction metrics, test results, deployment status, and live-lab limitations"],
+  "content_features": {
+    "code_blocks": 3,
+    "defined_terms": 8,
+    "portrait_images": 0
+  }
+}

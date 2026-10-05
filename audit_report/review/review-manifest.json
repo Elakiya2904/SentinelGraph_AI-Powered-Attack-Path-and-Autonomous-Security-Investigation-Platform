@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "pdf": "/home/ubuntu/sentinelgraph/audit_report/main.pdf",
+  "mode": "standard",
+  "page_count": 8,
+  "selected_pages": [
+    1,
+    2,
+    4,
+    5,
+    7,
+    8
+  ],
+  "rendered_pages": [
+    "/home/ubuntu/sentinelgraph/audit_report/review/pages/page-0001.png",
+    "/home/ubuntu/sentinelgraph/audit_report/review/pages/page-0002.png",
+    "/home/ubuntu/sentinelgraph/audit_report/review/pages/page-0004.png",
+    "/home/ubuntu/sentinelgraph/audit_report/review/pages/page-0005.png",
+    "/home/ubuntu/sentinelgraph/audit_report/review/pages/page-0007.png",
+    "/home/ubuntu/sentinelgraph/audit_report/review/pages/page-0008.png"
+  ],
+  "contact_sheets": [
+    "/home/ubuntu/sentinelgraph/audit_report/review/sheets/sheet-01.jpg"
+  ],
+  "settings": {
+    "dpi": 110,
+    "columns": 3,
+    "max_sheet_pages": 12,
+    "thumbnail_width": 320
+  }
+}

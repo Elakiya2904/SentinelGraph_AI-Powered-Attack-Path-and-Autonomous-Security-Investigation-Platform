@@ -118,4 +118,11 @@ ATTACK_TECHNIQUES = {
         "evidence_id": "attack-t1046",
         "summary": "Perimeter HTTP service request observed by edge sensor.",
     },
+    "aws_guardduty_unauthorized_access": {
+        "id": "T1110",
+        "name": "Brute Force (Cloud Ingress)",
+        "tactic": "Credential Access",
+        "evidence_id": "attack-t1110-aws",
+        "summary": "AWS GuardDuty detected credential brute-force attempts against EC2 perimeter instance via CloudTrail logs.",
+    },
 }

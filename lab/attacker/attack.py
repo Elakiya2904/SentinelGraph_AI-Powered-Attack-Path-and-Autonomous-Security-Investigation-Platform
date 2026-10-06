@@ -17,16 +17,19 @@ def try_login(user: str, password: str) -> None:
         print(connection.recv(256).decode("utf-8", errors="replace").strip(), flush=True)
 
 
-def run_ssh_attack() -> None:
+def run_ssh_attack(include_success: bool = False) -> None:
     print(f"=================================================================", flush=True)
-    print(f"SCENARIO 1: SSH Brute-Force against Perimeter Bastion", flush=True)
+    print(f"SCENARIO 1: SSH Brute-Force against Perimeter Bastion (3 Auth Failed)", flush=True)
     print(f"Target: {TARGET_HOST}:{SSH_PORT} (vpn-bastion / Compose network only)", flush=True)
     print(f"-----------------------------------------------------------------", flush=True)
     for attempt in range(1, 4):
-        try_login("demo", f"wrong-{attempt}")
+        print(f"[*] Attempt {attempt}/3: LOGIN demo wrong-pass-{attempt}", flush=True)
+        try_login("demo", f"wrong-pass-{attempt}")
         time.sleep(0.3)
-    try_login("demo", "lab-only-password")
-    print(f"[+] SSH attack sequence finished.\n", flush=True)
+    if include_success or os.environ.get("SSH_INCLUDE_SUCCESS", "").lower() == "true":
+        print(f"[*] Attempt 4: LOGIN demo lab-only-password (credential breach)", flush=True)
+        try_login("demo", "lab-only-password")
+    print(f"[+] SSH attack sequence finished (3 failed attempts logged).\n", flush=True)
 
 
 def send_web_request(path: str, label: str) -> None:
@@ -35,11 +38,11 @@ def send_web_request(path: str, label: str) -> None:
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "SentinelGraph-Attacker-Agent/1.0"})
         with urllib.request.urlopen(req, timeout=5) as resp:
-            content = resp.read().decode("utf-8", errors="replace").strip()
-            print(f"    [Response HTTP {resp.status}]: {content[:80]}", flush=True)
+            content = resp.read().decode("utf-8", errors="replace").strip().replace("\r", "").replace("\n", " ")
+            print(f"    [Response HTTP {resp.status}]: {content[:70]}", flush=True)
     except urllib.error.HTTPError as err:
-        body = err.read().decode("utf-8", errors="replace").strip()
-        print(f"    [Response HTTP {err.code}]: {body[:80]}", flush=True)
+        body = err.read().decode("utf-8", errors="replace").strip().replace("\r", "").replace("\n", " ")
+        print(f"    [Response HTTP {err.code}]: {body[:70]}", flush=True)
     except Exception as exc:
         print(f"    [Error]: {exc}", flush=True)
 

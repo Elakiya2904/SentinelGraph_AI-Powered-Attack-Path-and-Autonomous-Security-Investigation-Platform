@@ -169,13 +169,35 @@ async def trigger_demo_event(scenario: str = "ssh") -> dict:
                 "raw_payload": {"src_ip": "172.18.0.5", "target_port": 8080, "attack_type": "traversal", "payload": "../"},
             },
         ]
+    elif scenario == "aws":
+        aws_ref = "aws:cloudtrail:failed-login:arn:aws:ec2:us-east-1:123456789012:instance/i-0a89bc44d12"
+        alerts_data = [
+            {
+                "source_host": "vpn-bastion",
+                "rule": "aws_guardduty_unauthorized_access",
+                "severity": 9,
+                "raw_log_reference": f"{aws_ref}:{ts} FailedLogin src=13.58.13.54 target=i-0a89bc44d12 attempts=3",
+                "detector": "aws-guard-duty",
+                "source": "aws-production",
+                "raw_payload": {
+                    "account_id": "123456789012",
+                    "region": "us-east-1",
+                    "resource": "arn:aws:ec2:us-east-1:123456789012:instance/i-0a89bc44d12",
+                    "finding_type": "UnauthorizedAccess:EC2/SSHBruteForce",
+                    "source_ip": "13.58.13.54",
+                    "target_port": 22,
+                    "attempt_count": 3,
+                    "user": "admin",
+                },
+            }
+        ]
     else:
         if os.path.exists(log_file_path):
             try:
                 with open(log_file_path, "a", encoding="utf-8") as f:
-                    f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=root service=ssh reason=invalid_credentials\n")
-                    f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=admin service=ssh reason=invalid_credentials\n")
-                    f.write(f"{ts} AUTH_SUCCESS src=198.51.100.42 user=devops service=ssh action=login\n")
+                    f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=root service=ssh reason=invalid_credentials (attempt 1/3)\n")
+                    f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=admin service=ssh reason=invalid_credentials (attempt 2/3)\n")
+                    f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=demo service=ssh reason=invalid_credentials (attempt 3/3)\n")
             except Exception:
                 pass
 
@@ -183,21 +205,12 @@ async def trigger_demo_event(scenario: str = "ssh") -> dict:
             {
                 "source_host": "victim",
                 "rule": "ssh_brute_force_failed_login",
-                "severity": 6,
-                "raw_log_reference": f"victim.log:{ts} AUTH_FAIL src=198.51.100.42 user=admin service=ssh reason=invalid_credentials",
-                "detector": "sentinelgraph-edr-agent",
-                "source": "production-enclave",
-                "raw_payload": {"src_ip": "198.51.100.42", "target_port": 22, "attempts": 3},
-            },
-            {
-                "source_host": "victim",
-                "rule": "ssh_success_after_failures",
                 "severity": 9,
-                "raw_log_reference": f"victim.log:{ts} AUTH_SUCCESS src=198.51.100.42 user=devops service=ssh action=login",
+                "raw_log_reference": f"victim.log:{ts} AUTH_FAIL src=198.51.100.42 user=demo service=ssh (3 consecutive failures)",
                 "detector": "sentinelgraph-edr-agent",
                 "source": "production-enclave",
-                "raw_payload": {"src_ip": "198.51.100.42", "target_port": 22, "session_id": "ssh-sess-902"},
-            },
+                "raw_payload": {"src_ip": "198.51.100.42", "target_port": 22, "attempts": 3, "status": "3 auth failed"},
+            }
         ]
 
     created = []

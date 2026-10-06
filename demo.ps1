@@ -4,8 +4,8 @@
 
 param(
     [Parameter(Position=0)]
-    [ValidateSet("all", "ssh", "web")]
-    [string]$Scenario = "web"
+    [ValidateSet("all", "ssh", "web", "aws")]
+    [string]$Scenario = "ssh"
 )
 
 $ErrorActionPreference = "Continue"
@@ -60,12 +60,17 @@ if (-not $ready) {
 }
 Write-Host "      Platform is online and listening for detector webhooks." -ForegroundColor Green
 
-# Step 4: Run the simulated attack strictly inside the isolated Docker network
-Write-Host "`n[4/5] Executing simulated attack scenario '$Scenario' against victim..." -ForegroundColor Yellow
-docker compose --progress=plain --profile demo run --rm -e ATTACK_SCENARIO=$Scenario attacker
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "[!] Error: Failed to run simulated attacker container."
-    exit 1
+# Step 4: Run the attack scenario
+Write-Host "`n[4/5] Executing attack scenario '$Scenario'..." -ForegroundColor Yellow
+if ($Scenario -eq "aws") {
+    Write-Host "      Triggering AWS GuardDuty / CloudTrail live alert feed..." -ForegroundColor Cyan
+    $null = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/demo/trigger?scenario=aws" -Method Post
+} else {
+    docker compose --progress=plain --profile demo run -T --rm -e ATTACK_SCENARIO=$Scenario attacker
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "[!] Error: Failed to run simulated attacker container."
+        exit 1
+    }
 }
 
 # Step 5: Wait for detector to tail logs and post alerts

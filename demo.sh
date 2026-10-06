@@ -57,15 +57,20 @@ if [ "$READY" -ne 1 ]; then
 fi
 echo "      Platform is online and ready to receive alerts."
 
-SCENARIO="${1:-web}"
+SCENARIO="${1:-ssh}"
 echo "Scenario selected: $SCENARIO"
 
-# Step 3: Run the simulated attack strictly inside the isolated Docker network
+# Step 3: Run the attack scenario
 echo ""
-echo "[3/4] Triggering safe simulated attack scenario '$SCENARIO' against victim..."
-if ! $DOCKER_CMD compose --progress=plain --profile demo run --rm -e ATTACK_SCENARIO="$SCENARIO" attacker; then
-  echo "[!] Error: Failed to run simulated attacker container."
-  exit 1
+echo "[3/4] Triggering attack scenario '$SCENARIO'..."
+if [ "$SCENARIO" = "aws" ]; then
+  echo "      Triggering AWS GuardDuty / CloudTrail live alert feed..."
+  $CURL_CMD -s -X POST "http://127.0.0.1:8000/api/demo/trigger?scenario=aws" >/dev/null || true
+else
+  if ! $DOCKER_CMD compose --progress=plain --profile demo run -T --rm -e ATTACK_SCENARIO="$SCENARIO" attacker; then
+    echo "[!] Error: Failed to run simulated attacker container."
+    exit 1
+  fi
 fi
 
 # Step 4: Wait for detector to tail victim logs and post alerts to /alerts

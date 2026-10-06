@@ -25,13 +25,20 @@ def post_alert(line: str, rule: str, severity: int, source_host: str = "victim")
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=10) as response:
-        print(f"detector posted {response.status}: {rule} (host={source_host})", flush=True)
+    for attempt in range(10):
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                print(f"detector posted {response.status}: {rule} (host={source_host})", flush=True)
+                return
+        except Exception as exc:
+            print(f"detector post retry {attempt + 1}/10: {exc}", flush=True)
+            time.sleep(1)
 
 
 while not os.path.exists(LOG_PATH):
     time.sleep(0.5)
 
+fail_count = 0
 with open(LOG_PATH, "r", encoding="utf-8") as log_file:
     while True:
         line = log_file.readline()
@@ -39,9 +46,12 @@ with open(LOG_PATH, "r", encoding="utf-8") as log_file:
             time.sleep(0.25)
             continue
         if "AUTH_FAIL" in line:
-            post_alert(line, "ssh_brute_force_failed_login", 6, source_host="victim")
+            fail_count += 1
+            severity = 9 if fail_count >= 3 else 6
+            post_alert(line, "ssh_brute_force_failed_login", severity, source_host="victim")
         elif "AUTH_SUCCESS" in line:
             post_alert(line, "ssh_success_after_failures", 9, source_host="victim")
+            fail_count = 0
         elif "WEB_REQUEST" in line:
             # Detect suspicious SQL Injection or Path Traversal
             upper_line = line.upper()

@@ -136,45 +136,77 @@ def get_prediction(source_host: str = "victim") -> dict:
 
 
 @app.post("/api/demo/trigger")
-async def trigger_demo_event() -> dict:
+async def trigger_demo_event(scenario: str = "ssh") -> dict:
     log_file_path = os.environ.get("VICTIM_LOG", "/logs/victim.log")
     ts = datetime.now(timezone.utc).isoformat()
-    if os.path.exists(log_file_path):
-        try:
-            with open(log_file_path, "a", encoding="utf-8") as f:
-                f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=root service=ssh reason=invalid_credentials\n")
-                f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=admin service=ssh reason=invalid_credentials\n")
-                f.write(f"{ts} AUTH_SUCCESS src=198.51.100.42 user=devops service=ssh action=login\n")
-        except Exception:
-            pass
 
-    alerts_data = [
-        {
-            "source_host": "victim",
-            "rule": "ssh_brute_force_failed_login",
-            "severity": 6,
-            "raw_log_reference": f"victim.log:{ts} AUTH_FAIL src=198.51.100.42 user=admin service=ssh reason=invalid_credentials",
-            "detector": "sentinelgraph-edr-agent",
-            "source": "production-enclave",
-            "raw_payload": {"src_ip": "198.51.100.42", "target_port": 22, "attempts": 3},
-        },
-        {
-            "source_host": "victim",
-            "rule": "ssh_success_after_failures",
-            "severity": 9,
-            "raw_log_reference": f"victim.log:{ts} AUTH_SUCCESS src=198.51.100.42 user=devops service=ssh action=login",
-            "detector": "sentinelgraph-edr-agent",
-            "source": "production-enclave",
-            "raw_payload": {"src_ip": "198.51.100.42", "target_port": 22, "session_id": "ssh-sess-902"},
-        },
-    ]
+    if scenario == "web":
+        if os.path.exists(log_file_path):
+            try:
+                with open(log_file_path, "a", encoding="utf-8") as f:
+                    f.write(f"{ts} WEB_REQUEST client=172.18.0.5 method=GET path=/login?user=admin' OR 1=1-- raw_path=/login?user=admin'%20OR%201=1--\n")
+                    f.write(f"{ts} WEB_REQUEST client=172.18.0.5 method=GET path=/view?page=../../../../etc/passwd raw_path=/view?page=../../../../etc/passwd\n")
+            except Exception:
+                pass
+
+        alerts_data = [
+            {
+                "source_host": "web-portal",
+                "rule": "web_sqli_injection_attempt",
+                "severity": 8,
+                "raw_log_reference": f"victim.log:{ts} WEB_REQUEST client=172.18.0.5 method=GET path=/login?user=admin' OR 1=1--",
+                "detector": "sentinelgraph-edr-agent",
+                "source": "production-enclave",
+                "raw_payload": {"src_ip": "172.18.0.5", "target_port": 8080, "attack_type": "sqli", "payload": "' OR 1=1"},
+            },
+            {
+                "source_host": "web-portal",
+                "rule": "web_path_traversal_attempt",
+                "severity": 8,
+                "raw_log_reference": f"victim.log:{ts} WEB_REQUEST client=172.18.0.5 method=GET path=/view?page=../../../../etc/passwd",
+                "detector": "sentinelgraph-edr-agent",
+                "source": "production-enclave",
+                "raw_payload": {"src_ip": "172.18.0.5", "target_port": 8080, "attack_type": "traversal", "payload": "../"},
+            },
+        ]
+    else:
+        if os.path.exists(log_file_path):
+            try:
+                with open(log_file_path, "a", encoding="utf-8") as f:
+                    f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=root service=ssh reason=invalid_credentials\n")
+                    f.write(f"{ts} AUTH_FAIL src=198.51.100.42 user=admin service=ssh reason=invalid_credentials\n")
+                    f.write(f"{ts} AUTH_SUCCESS src=198.51.100.42 user=devops service=ssh action=login\n")
+            except Exception:
+                pass
+
+        alerts_data = [
+            {
+                "source_host": "victim",
+                "rule": "ssh_brute_force_failed_login",
+                "severity": 6,
+                "raw_log_reference": f"victim.log:{ts} AUTH_FAIL src=198.51.100.42 user=admin service=ssh reason=invalid_credentials",
+                "detector": "sentinelgraph-edr-agent",
+                "source": "production-enclave",
+                "raw_payload": {"src_ip": "198.51.100.42", "target_port": 22, "attempts": 3},
+            },
+            {
+                "source_host": "victim",
+                "rule": "ssh_success_after_failures",
+                "severity": 9,
+                "raw_log_reference": f"victim.log:{ts} AUTH_SUCCESS src=198.51.100.42 user=devops service=ssh action=login",
+                "detector": "sentinelgraph-edr-agent",
+                "source": "production-enclave",
+                "raw_payload": {"src_ip": "198.51.100.42", "target_port": 22, "session_id": "ssh-sess-902"},
+            },
+        ]
+
     created = []
     for alert_dict in alerts_data:
         normalized = AlertIn(**alert_dict).normalized()
         await alert_queue.publish(normalized)
         run_id = investigation_manager.start(normalized)
         created.append({"alert_id": normalized["alert_id"], "run_id": run_id})
-    return {"status": "triggered", "alerts": created}
+    return {"status": "triggered", "scenario": scenario, "alerts": created}
 
 
 @app.post("/api/demo/reset")

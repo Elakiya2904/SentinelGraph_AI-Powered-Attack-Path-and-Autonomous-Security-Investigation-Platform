@@ -59,49 +59,218 @@ Open your browser to: **[http://localhost:3000](http://localhost:3000)**
 
 ---
 
-## 🎬 Live Presentation Walkthrough (For Judges)
+---
+
+## 🎬 Live Presentation Walkthrough & Terminal Screenshots
 
 Demonstrating the live incident flow side-by-side (Terminal on left, Browser on right):
 
 ```
-┌─────────────────────────────────┬─────────────────────────────────┐
-│        TERMINAL (LEFT)          │       BROWSER (RIGHT: 3000)     │
-│                                 │                                 │
-│  > docker compose ... run       │   [01 Attack Graph]             │
-│    attacker                     │   🚨 ACTIVE INCIDENT (vpn-bastion)│
-│                                 │   [03 Investigation]            │
-│    AUTH FAILED x3               │   Executive Briefing + Verdict  │
-│    AUTH OK (lab session opened) │   [04 What-If]                  │
-│                                 │   -50% Paths Severed (Clear Fix)│
-└─────────────────────────────────┴─────────────────────────────────┘
+┌────────────────────────────────────────┬────────────────────────────────────────┐
+│            TERMINAL (LEFT)             │         BROWSER (RIGHT: :3000)         │
+│                                        │                                        │
+│  > .\demo.ps1 web                      │   [01 Attack Graph]                    │
+│    Target: victim:8080 (web-portal)    │   🚨 ACTIVE INGRESS (web-portal)       │
+│    Payload: /login?user=admin' OR 1=1  │   [03 Autonomous Investigation]        │
+│    Payload: /view?page=../../etc/passwd│   Executive Briefing: SQLi/Traversal   │
+│    Verdict: CONFIRMED ATTACK (89%)     │   [04 What-If Workbench]               │
+│    Action: WAF Rule & CVE-2021-44228   │   Patching Log4Shell Cuts Route        │
+└────────────────────────────────────────┴────────────────────────────────────────┘
 ```
 
-### Step 1: Ensure Clean Baseline
-In the web console, click **`↺ Reset Lab`** in the top right.
-The status shows **`Enclave Protected`** (green beacon) with **`No Active Threats`**.
+### 🖥️ Real Output: Live Terminal Execution
 
-### Step 2: Trigger the Live Docker Attack in Terminal
-Run this command in your terminal:
+#### Attack Scenario 1: Web Application Exploit (`web-portal`)
+```text
+=================================================================
+  SENTINELGRAPH DOCKER-BASED DEMO TRIGGER (WEB)
+=================================================================
+[1/5] Checking Docker daemon status...
+      Docker daemon is active.
+[2/5] Ensuring required lab services are running...
+[3/5] Checking SentinelGraph platform webhook (http://127.0.0.1:8000/health)...
+      Platform is online and listening for detector webhooks.
+
+[4/5] Executing simulated attack scenario 'web' against victim...
+=================================================================
+SCENARIO 2: Web Application Exploit against Web Portal
+Target: victim:8080 (web-portal / Customer Web Portal)
+-----------------------------------------------------------------
+[*] Sending Health probe payload to http://victim:8080/health...
+    [Response HTTP 200]: victim-ok
+[*] Sending SQL Injection (' OR 1=1) payload to http://victim:8080/login?user=admin'%20OR%201=1--...
+    [Response HTTP 500]: HTTP 500 Internal Server Error: SQL syntax error near 'OR 1=1'
+[*] Sending Directory Traversal (../) payload to http://victim:8080/view?page=../../../../etc/passwd...
+    [Response HTTP 200]: root:x:0:0:root:/root:/bin/bash
+    daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+[+] Web exploit sequence finished.
+
+SAFE DEMO COMPLETE: no external target was contacted
+[5/5] Waiting for detector to post normalized alerts to SentinelGraph...
+
+=================================================================
+  GENERATED ALERTS & PIPELINE VERIFICATION
+=================================================================
+Total Alerts in Queue: 74
+-----------------------------------------------------------------
+[Alert 1]
+  Alert ID:          alert-6e75e7ed39
+  Source Host:       web-portal
+  Rule Triggered:    web_path_traversal_attempt
+  Severity:          8/10
+  Timestamp:         2026-10-06T04:51:50.768366+00:00
+  Detector:          sentinelgraph-edr-agent
+  Status:            queued
+  Raw Log Reference: victim.log:2026-10-06T04:51:50.550299+00:00 WEB_REQUEST client=172.18.0.5 method=GET path=/view?page=../../../../etc/passwd raw_path=/view?page=../../../../etc/passwd
+-----------------------------------------------------------------
+[Alert 2]
+  Alert ID:          alert-ac173728e3
+  Source Host:       web-portal
+  Rule Triggered:    web_sqli_injection_attempt
+  Severity:          8/10
+  Timestamp:         2026-10-06T04:51:50.264581+00:00
+  Detector:          sentinelgraph-edr-agent
+  Status:            queued
+  Raw Log Reference: victim.log:2026-10-06T04:51:50.245931+00:00 WEB_REQUEST client=172.18.0.5 method=GET path=/login?user=admin' OR 1=1-- raw_path=/login?user=admin'%20OR%201=1--
+-----------------------------------------------------------------
+INVESTIGATION TRIGGERED AUTOMATICALLY:
+  Run ID:            investigation-eeb634dd52
+  Status:            complete
+  Verdict:           confirmed attack (89% confidence)
+  Evidence Coverage: 100%
+  Action (Gated):    Apply perimeter WAF filtering rule, isolate web-portal container ingress, and patch CVE-2021-44228; human operator authorization required.
+-----------------------------------------------------------------
+
+Demo flow completed successfully:
+  .\demo.ps1 -> simulated attack -> victim log -> detector -> SentinelGraph /alerts
+```
+
+#### Attack Scenario 2: SSH Brute Force (`vpn-bastion`)
+```text
+=================================================================
+  SENTINELGRAPH DOCKER-BASED DEMO TRIGGER (SSH)
+=================================================================
+[4/5] Executing simulated attack scenario 'ssh' against victim:2222...
+SAFE DEMO: target=victim:2222 (Compose network only)
+AUTH FAILED
+AUTH FAILED
+AUTH FAILED
+AUTH OK lab session opened
+SAFE DEMO COMPLETE: no external target was contacted
+[5/5] Waiting for detector to post normalized alerts to SentinelGraph...
+
+=================================================================
+  GENERATED ALERTS & PIPELINE VERIFICATION
+=================================================================
+[Alert 1]
+  Alert ID:          alert-bd8ffd2528
+  Source Host:       victim
+  Rule Triggered:    ssh_success_after_failures
+  Severity:          9/10
+  Detector:          sentinelgraph-edr-agent
+  Raw Log Reference: victim.log: AUTH_SUCCESS src=172.18.0.5 user=demo service=ssh action=login
+-----------------------------------------------------------------
+INVESTIGATION TRIGGERED AUTOMATICALLY:
+  Verdict:           confirmed attack (89% confidence)
+  Action (Gated):    Isolate compromised asset at perimeter firewall, block ingress threat IP, and rotate credentials; human operator authorization required.
+```
+
+---
+
+## 🖥️ SOC UI Dashboard Screens (Visual Architecture)
+
+### 01. Attack Graph (`http://localhost:3000/`)
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🚨 ACTIVE BREACH DETECTED: Ingress via Customer Web Portal (web-portal)                │
+│    Correlated live alert: web_sqli_injection_attempt · Lateral path to Crown Jewels    │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ [ATTACK PATHS: 24]     [OVERALL RISK: 96/100]     [CROWN JEWELS: 02]    [CHOKE: 100%] │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ ROUTE STEPPER:                                                                         │
+│   internet ➔ edge-gateway ➔ 🚨 web-portal (Breached) ➔ admin-role ➔ app-server ➔ ⭐ prod-db│
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ GRAPH CANVAS (Cytoscape.js):                                                           │
+│           (internet) ──[443]──> (edge-gateway)                                         │
+│                                       │                                                │
+│                                  [8080/HTTP]                                           │
+│                                       ▼                                                │
+│                          🚨 [ web-portal ] (BREACHED FOOTHOLD)                        │
+│                                       │                                                │
+│                               [CVE-2021-44228]                                         │
+│                                       ▼                                                │
+│                                [ admin-role ]                                          │
+│                                       │                                                │
+│                                       ▼                                                │
+│                                [ app-server ]                                          │
+│                                  /         \                                           │
+│                            [5432]           [8200]                                     │
+│                              ▼                 ▼                                       │
+│                       ⭐ [prod-db]       ⭐ [secrets-vault]                            │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 02. Autonomous Investigation (`http://localhost:3000/investigation`)
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ WHAT HAPPENED: 4 Executive SOC Briefing Cards                                          │
+├────────────────────┬────────────────────┬────────────────────┬─────────────────────────┤
+│ 👤 WHO ATTACKED    │ 🎯 WHAT HAPPENED   │ 📍 WHERE (FOOTHOLD)│ 🛡️ IMPACT ON CROWN JEWELS│
+│ External IP        │ Web App Exploit    │ web-portal         │ Critical Lateral Pivot  │
+│ 172.18.0.5         │ SQLi (' OR 1=1) &  │ victim:8080        │ Exposed path to Database│
+│ Lab Attacker       │ Traversal (../)    │ CVE-2021-44228     │ and HashiCorp Vault     │
+├────────────────────┴────────────────────┴────────────────────┴─────────────────────────┤
+│ INCIDENT PROGRESSION TIMELINE:                       DETERMINISTIC VERDICT:            │
+│ 01. Suspicious HTTP Ingress (port 8080)              ● CONFIRMED ATTACK                │
+│ 02. Exploit Signature Verified (SQLi / Traversal)    Confidence: 89% Evidence-Backed   │
+│ 03. Attack Graph Lateral Correlation (NetworkX)      --------------------------------- │
+│ 04. Perimeter CVE Matched (CVE-2021-44228 Log4j2)    GATED CONTAINMENT ACTION:         │
+│                                                      Deploy perimeter WAF rule, isolate│
+│                                                      web-portal, patch CVE-2021-44228. │
+│                                                      [ Approve & Execute Containment ] │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🕹️ How to Test and Verify Both Live Triggers
+
+### 1. Web Application Exploit (Web Portal)
+To simulate the web application exploit with `' OR 1=1` and `../`:
 ```bash
-# Using raw Docker Compose:
-docker compose --profile demo run --rm attacker
+# In PowerShell:
+powershell -ExecutionPolicy Bypass -File .\demo.ps1 web
 
-# Or using the PowerShell automation script:
-powershell -ExecutionPolicy Bypass -File .\demo.ps1
+# In Bash / macOS / Linux / WSL:
+./demo.sh web
 
-# Or in Linux/macOS/WSL:
-./demo.sh
+# Or via direct Docker Compose:
+docker compose --profile demo run --rm -e ATTACK_SCENARIO=web attacker
 ```
 
-### Step 3: Watch the Automated Screen-to-Screen Flow
-The browser detects the real-time Server-Sent Event (SSE) and **automatically advances across screens**:
-1. **01 Attack Graph (6s):** Flashes `🚨 ACTIVE BREACH DETECTED`. Lights up the compromised route in bold crimson red directly to `prod-db`.
-2. **02 Top Risks (6s):** Displays the choke points and shows the matching broken attack paths.
-3. **03 Investigation (6s):** Displays the executive **WHO / WHAT / WHERE / IMPACT** cards, 4-step progression, and 89% confirmed attack verdict.
-4. **04 What-If Workbench (Settles here):** Shows the crystal-clear answer: patching `CVE-2024-3400` destroys 11 attack paths (-50%). Click **`Approve & Apply Mitigation`** to seal the perimeter!
+### 2. SSH Brute Force (VPN Bastion)
+To simulate the perimeter SSH brute-force attack:
+```bash
+# In PowerShell:
+powershell -ExecutionPolicy Bypass -File .\demo.ps1 ssh
 
-### Step 4: Repeat on Demand
-Click **`↺ Reset Lab`** in the browser anytime to clear all alerts and reset the graph baseline for another live demonstration.
+# In Bash / Linux:
+./demo.sh ssh
+
+# Or via direct Docker Compose:
+docker compose --profile demo run --rm -e ATTACK_SCENARIO=ssh attacker
+```
+
+### 3. Both Scenarios Sequentially
+```bash
+powershell -ExecutionPolicy Bypass -File .\demo.ps1 all
+```
+
+### 4. Direct In-Browser Triggering
+You can also trigger either attack directly inside the web UI at **`http://localhost:3000`**:
+* Click **`🌐 Web Portal`** in the top navigation bar to launch the Web exploit.
+* Click **`⚡ SSH Bastion`** in the top navigation bar to launch the SSH brute force.
+* Click **`↺ Reset Lab`** at any time to clear the alerts and restore the baseline.
 
 ---
 

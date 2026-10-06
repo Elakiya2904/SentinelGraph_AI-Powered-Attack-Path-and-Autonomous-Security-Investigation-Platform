@@ -1,11 +1,17 @@
 # SentinelGraph Safe Lab Demo Trigger (PowerShell)
 # Expected flow:
-# .\demo.ps1 -> simulated attack -> victim log -> detector -> SentinelGraph /alerts -> terminal display -> dashboard investigation
+# .\demo.ps1 [-Scenario web|ssh|all] -> simulated attack -> victim log -> detector -> SentinelGraph /alerts -> terminal display -> dashboard investigation
+
+param(
+    [Parameter(Position=0)]
+    [ValidateSet("all", "ssh", "web")]
+    [string]$Scenario = "web"
+)
 
 $ErrorActionPreference = "Continue"
 
 Write-Host "=================================================================" -ForegroundColor Cyan
-Write-Host "  SENTINELGRAPH DOCKER-BASED DEMO TRIGGER" -ForegroundColor Cyan
+Write-Host "  SENTINELGRAPH DOCKER-BASED DEMO TRIGGER ($($Scenario.ToUpper()))" -ForegroundColor Cyan
 Write-Host "=================================================================" -ForegroundColor Cyan
 
 # Step 1: Verify Docker engine is running
@@ -55,8 +61,8 @@ if (-not $ready) {
 Write-Host "      Platform is online and listening for detector webhooks." -ForegroundColor Green
 
 # Step 4: Run the simulated attack strictly inside the isolated Docker network
-Write-Host "`n[4/5] Executing simulated attack scenario against victim:2222..." -ForegroundColor Yellow
-docker compose --progress=plain --profile demo run --rm attacker
+Write-Host "`n[4/5] Executing simulated attack scenario '$Scenario' against victim..." -ForegroundColor Yellow
+docker compose --progress=plain --profile demo run --rm -e ATTACK_SCENARIO=$Scenario attacker
 if ($LASTEXITCODE -ne 0) {
     Write-Error "[!] Error: Failed to run simulated attacker container."
     exit 1

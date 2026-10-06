@@ -98,16 +98,25 @@ function App() {
     }
   }, [autoTourActive])
 
-  const triggerThreatEvent = async () => {
+  const triggerThreatEvent = async (scenario = 'web') => {
     setTriggering(true)
-    showToast('🚨 SIMULATING LIVE ATTACK: SSH brute force against victim:2222...')
+    const isWeb = scenario === 'web'
+    showToast(
+      isWeb
+        ? "🚨 SIMULATING LIVE ATTACK: Web Portal exploit (' OR 1=1 / ../) against victim:8080..."
+        : '🚨 SIMULATING LIVE ATTACK: SSH brute force against victim:2222...'
+    )
     try {
-      await fetch('/api/demo/trigger', { method: 'POST' })
+      await fetch(`/api/demo/trigger?scenario=${scenario}`, { method: 'POST' })
     } catch {}
     setTimeout(() => {
       setTriggering(false)
       startAutoTour(0)
-      showToast('⚡ TELEMETRY CAPTURED: SSH breach on vpn-bastion (Severity 9/10). Autonomous ReAct agent active!')
+      showToast(
+        isWeb
+          ? "⚡ TELEMETRY CAPTURED: Web Portal exploit on web-portal (SQLi / Traversal, Severity 8/10). Autonomous ReAct agent active!"
+          : '⚡ TELEMETRY CAPTURED: SSH breach on vpn-bastion (Severity 9/10). Autonomous ReAct agent active!'
+      )
     }, 1200)
   }
 
@@ -165,6 +174,14 @@ function App() {
     return () => stream.close()
   }, [])
 
+  const activeCompromisedNode = useMemo(() => {
+    if (!alerts || alerts.length === 0) return null
+    if (alerts[0]?.source_host === 'web-portal' || alerts[0]?.rule?.startsWith('web_')) {
+      return 'web-portal'
+    }
+    return 'vpn-bastion'
+  }, [alerts])
+
   const headerLabel = NAV_ITEMS.find((item) => item.id === screen)?.label || 'Attack Graph'
 
   return (
@@ -209,8 +226,22 @@ function App() {
             >
               {autoTourActive ? '⏸ Pause Tour' : '▶ Auto-Tour'}
             </button>
-            <button className="trigger-btn" onClick={triggerThreatEvent} disabled={triggering} title="Trigger simulated attack live">
-              {triggering ? '⚡ Ingress Active…' : '⚡ Live Attack Trigger'}
+            <button
+              className="trigger-btn"
+              onClick={() => triggerThreatEvent('ssh')}
+              disabled={triggering}
+              title="Trigger simulated SSH brute-force breach against vpn-bastion:2222"
+            >
+              {triggering ? '⚡ Ingress Active…' : '⚡ SSH Bastion'}
+            </button>
+            <button
+              className="trigger-btn"
+              style={{ borderColor: '#d97706', color: '#b45309' }}
+              onClick={() => triggerThreatEvent('web')}
+              disabled={triggering}
+              title="Trigger simulated Web Exploit (' OR 1=1 / ../) against web-portal:8080"
+            >
+              {triggering ? '⚡ Ingress Active…' : '🌐 Web Portal'}
             </button>
             <button className="reset-btn" onClick={resetLab} title="Reset lab incident to safe baseline">
               ↺ Reset Lab
@@ -292,16 +323,16 @@ function App() {
         </div>
 
         {error && <div className="error-banner">API connection pending — start the FastAPI backend on port 8000, then refresh.</div>}
-        {screen === 'graph' && <GraphScreen payload={payload} selectedNode={selectedNode} setSelectedNode={setSelectedNode} alerts={alerts} />}
-        {screen === 'risks' && <RisksScreen payload={payload} alerts={alerts} onNavigateWhatIf={() => navigate('what-if')} />}
-        {screen === 'investigation' && <InvestigationScreen investigation={investigation} alerts={alerts} onTrigger={triggerThreatEvent} triggering={triggering} />}
-        {screen === 'what-if' && <WhatIfScreen payload={payload} setPayload={setPayload} alerts={alerts} />}
+        {screen === 'graph' && <GraphScreen payload={payload} selectedNode={selectedNode} setSelectedNode={setSelectedNode} alerts={alerts} activeCompromisedNode={activeCompromisedNode} />}
+        {screen === 'risks' && <RisksScreen payload={payload} alerts={alerts} onNavigateWhatIf={() => navigate('what-if')} activeCompromisedNode={activeCompromisedNode} />}
+        {screen === 'investigation' && <InvestigationScreen investigation={investigation} alerts={alerts} onTrigger={triggerThreatEvent} triggering={triggering} activeCompromisedNode={activeCompromisedNode} />}
+        {screen === 'what-if' && <WhatIfScreen payload={payload} setPayload={setPayload} alerts={alerts} activeCompromisedNode={activeCompromisedNode} />}
       </main>
     </div>
   )
 }
 
-function GraphScreen({ payload, selectedNode, setSelectedNode, alerts }) {
+function GraphScreen({ payload, selectedNode, setSelectedNode, alerts, activeCompromisedNode }) {
   const cyContainer = useRef(null)
   const cyRef = useRef(null)
   const [pathFilter, setPathFilter] = useState('all')
@@ -472,22 +503,28 @@ function GraphScreen({ payload, selectedNode, setSelectedNode, alerts }) {
 
   const activeRoute = useMemo(() => {
     if (selectedPath) return selectedPath
+    if (activeCompromisedNode === 'web-portal') {
+      return (
+        payload?.paths?.find((p) => p.nodes.includes('web-portal') && (p.nodes[1] === 'web-portal' || p.nodes[2] === 'web-portal')) ||
+        payload?.paths?.find((p) => p.nodes.includes('web-portal')) ||
+        payload?.paths?.[0]
+      )
+    }
     return payload?.paths?.find((p) => p.nodes.includes('vpn-bastion')) || payload?.paths?.[0]
-  }, [selectedPath, payload])
+  }, [selectedPath, payload, activeCompromisedNode])
 
   useEffect(() => {
     const cy = cyRef.current
     if (!cy) return
-    if (alerts && alerts.length > 0) {
-      cy.getElementById('vpn-bastion').addClass('compromised-node')
+    cy.elements().removeClass('compromised-node')
+    if (alerts && alerts.length > 0 && activeCompromisedNode) {
+      cy.getElementById(activeCompromisedNode).addClass('compromised-node')
       if (!selectedNode && payload?.nodes) {
-        const comp = payload.nodes.find((n) => n.id === 'vpn-bastion')
+        const comp = payload.nodes.find((n) => n.id === activeCompromisedNode)
         if (comp) setSelectedNode(comp)
       }
-    } else {
-      cy.getElementById('vpn-bastion').removeClass('compromised-node')
     }
-  }, [alerts, payload, selectedNode, setSelectedNode])
+  }, [alerts, activeCompromisedNode, payload, selectedNode, setSelectedNode])
 
   useEffect(() => {
     const cy = cyRef.current
@@ -513,8 +550,16 @@ function GraphScreen({ payload, selectedNode, setSelectedNode, alerts }) {
         <div className="threat-banner">
           <span className="threat-pulse">🚨</span>
           <div>
-            <strong>ACTIVE BREACH DETECTED: Ingress via VPN Bastion (vpn-gw-01)</strong>
-            <span>Correlated live alert: {alerts[0]?.rule}. 11 attack paths are exposed downstream to Crown Jewels (Production DB & Vault).</span>
+            <strong>
+              {activeCompromisedNode === 'web-portal'
+                ? 'ACTIVE BREACH DETECTED: Ingress via Customer Web Portal (web-portal)'
+                : 'ACTIVE BREACH DETECTED: Ingress via VPN Bastion (vpn-gw-01)'}
+            </strong>
+            <span>
+              {activeCompromisedNode === 'web-portal'
+                ? `Correlated live alert: ${alerts[0]?.rule}. Exploit payload (' OR 1=1 / ../) exposes downstream lateral attack route to Crown Jewels.`
+                : `Correlated live alert: ${alerts[0]?.rule}. 11 attack paths are exposed downstream to Crown Jewels (Production DB & Vault).`}
+            </span>
           </div>
         </div>
       )}
@@ -543,26 +588,25 @@ function GraphScreen({ payload, selectedNode, setSelectedNode, alerts }) {
           <div className="active-route-banner">
             <div className="route-header">
               <span className="route-pill">
-                {hasActiveThreat ? '🚨 ACTIVE COMPROMISED ATTACK ROUTE (PATH-01)' : 'GRAPH ATTACK ROUTE (PATH-01)'}
+                {hasActiveThreat
+                  ? `🚨 ACTIVE COMPROMISED ATTACK ROUTE (${activeRoute?.path_id?.toUpperCase() || 'PATH-01'})`
+                  : 'GRAPH ATTACK ROUTE (PATH-01)'}
               </span>
-              <span className="route-stat">Target: Production DB · 15 Lateral Paths</span>
+              <span className="route-stat">Target: Production DB · {pathCount} Lateral Paths</span>
             </div>
             <div className="route-stepper">
-              <span className="step-node">internet</span>
-              <span className="step-arrow">➔</span>
-              <span className="step-node">edge-gateway</span>
-              <span className="step-arrow">➔</span>
-              <span className={`step-node ${hasActiveThreat ? 'breached' : ''}`}>
-                {hasActiveThreat ? '🚨 vpn-bastion (Breached)' : 'vpn-bastion'}
-              </span>
-              <span className="step-arrow">➔</span>
-              <span className="step-node">web-portal</span>
-              <span className="step-arrow">➔</span>
-              <span className="step-node">admin-role</span>
-              <span className="step-arrow">➔</span>
-              <span className="step-node">app-server</span>
-              <span className="step-arrow">➔</span>
-              <span className="step-node target">⭐ prod-db (Target)</span>
+              {activeRoute?.nodes?.map((nodeId, idx) => (
+                <React.Fragment key={nodeId}>
+                  {idx > 0 && <span className="step-arrow">➔</span>}
+                  <span
+                    className={`step-node ${nodeId === activeCompromisedNode ? 'breached' : ''} ${nodeId === activeRoute.crown_jewel ? 'target' : ''}`}
+                  >
+                    {nodeId === activeCompromisedNode
+                      ? `🚨 ${nodeId} (Breached)`
+                      : (nodeId === activeRoute.crown_jewel ? `⭐ ${nodeId} (Target)` : nodeId)}
+                  </span>
+                </React.Fragment>
+              ))}
             </div>
           </div>
 
@@ -606,7 +650,7 @@ function GraphScreen({ payload, selectedNode, setSelectedNode, alerts }) {
   )
 }
 
-function RisksScreen({ payload, alerts, onNavigateWhatIf }) {
+function RisksScreen({ payload, alerts, onNavigateWhatIf, activeCompromisedNode }) {
   const hasActiveThreat = alerts && alerts.length > 0
   return (
     <section className="content-stack">
@@ -614,8 +658,16 @@ function RisksScreen({ payload, alerts, onNavigateWhatIf }) {
         <div className="threat-banner">
           <span className="threat-pulse">🚨</span>
           <div>
-            <strong>ACTIVE EXPLOITATION FOOTHOLD IDENTIFIED: VPN Bastion (vpn-gw-01)</strong>
-            <span>Live brute-force alert ({alerts[0]?.rule}) received from victim host. Choke-point remediation is urgently prioritized.</span>
+            <strong>
+              {activeCompromisedNode === 'web-portal'
+                ? 'ACTIVE EXPLOITATION FOOTHOLD IDENTIFIED: Web Portal (web-portal)'
+                : 'ACTIVE EXPLOITATION FOOTHOLD IDENTIFIED: VPN Bastion (vpn-gw-01)'}
+            </strong>
+            <span>
+              {activeCompromisedNode === 'web-portal'
+                ? `Live exploit alert (${alerts[0]?.rule}) received from web surface. Choke-point remediation is urgently prioritized.`
+                : `Live brute-force alert (${alerts[0]?.rule}) received from victim host. Choke-point remediation is urgently prioritized.`}
+            </span>
           </div>
         </div>
       )}
@@ -641,7 +693,7 @@ function RisksScreen({ payload, alerts, onNavigateWhatIf }) {
             <div className="risk-main">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <strong>{risk.label}</strong>
-                {hasActiveThreat && (risk.id === 'vpn-bastion' || risk.id === 'edge-gateway') && (
+                {hasActiveThreat && (risk.id === activeCompromisedNode || risk.id === 'edge-gateway' || (activeCompromisedNode === 'web-portal' && risk.id === 'web-portal')) && (
                   <span className="active-breach-badge">🚨 ACTIVE INCIDENT PATH</span>
                 )}
               </div>
@@ -816,70 +868,137 @@ function formatInvestigationStep(event) {
   }
 }
 
-function InvestigationScreen({ investigation, alerts, onTrigger, triggering }) {
+function InvestigationScreen({ investigation, alerts, onTrigger, triggering, activeCompromisedNode }) {
   const verdict = investigation.verdict
   const latestAlert = alerts[0]
   const [mitigationAuthorized, setMitigationAuthorized] = useState(false)
+  const isWebAttack = activeCompromisedNode === 'web-portal' || latestAlert?.source_host === 'web-portal' || latestAlert?.rule?.startsWith('web_')
 
   // Executive 4-card briefing data
-  const incidentBriefing = [
-    {
-      kicker: 'WHO ATTACKED',
-      value: 'External Threat Actor (172.18.0.5)',
-      detail: 'Brute-force password guessing from isolated lab container',
-      accent: 'critical',
-    },
-    {
-      kicker: 'WHAT HAPPENED',
-      value: 'SSH Brute-Force & Compromise',
-      detail: '3 Failed Login Attempts ➔ 1 Valid Session Opened',
-      accent: 'critical',
-    },
-    {
-      kicker: 'WHERE (ENTRY FOOTHOLD)',
-      value: 'vpn-bastion (victim:2222)',
-      detail: 'Perimeter Gateway vulnerable to CVE-2024-3400',
-      accent: '',
-    },
-    {
-      kicker: 'IMPACT ON CROWN JEWELS',
-      value: '11 Lateral Paths Exposed',
-      detail: 'Direct reachable path to Production Database (prod-db)',
-      accent: 'critical',
-    },
-  ]
+  const incidentBriefing = isWebAttack
+    ? [
+        {
+          kicker: 'WHO ATTACKED',
+          value: 'External Threat Actor (172.18.0.5)',
+          detail: 'Automated exploit payloads delivered from isolated attacker container',
+          accent: 'critical',
+        },
+        {
+          kicker: 'WHAT HAPPENED',
+          value: 'Web Application Exploit Attempt',
+          detail: "Suspicious HTTP Ingress (SQLi ' OR 1=1 / Directory Traversal ../)",
+          accent: 'critical',
+        },
+        {
+          kicker: 'WHERE (ENTRY FOOTHOLD)',
+          value: 'web-portal (victim:8080)',
+          detail: 'Customer Web Portal vulnerable to CVE-2021-44228 (Log4j2 RCE)',
+          accent: '',
+        },
+        {
+          kicker: 'IMPACT ON CROWN JEWELS',
+          value: 'Critical Lateral Path Exposed',
+          detail: 'Direct reachable path to IAM App Admin Role & Database (prod-db)',
+          accent: 'critical',
+        },
+      ]
+    : [
+        {
+          kicker: 'WHO ATTACKED',
+          value: 'External Threat Actor (172.18.0.5)',
+          detail: 'Brute-force password guessing from isolated lab container',
+          accent: 'critical',
+        },
+        {
+          kicker: 'WHAT HAPPENED',
+          value: 'SSH Brute-Force & Compromise',
+          detail: '3 Failed Login Attempts ➔ 1 Valid Session Opened',
+          accent: 'critical',
+        },
+        {
+          kicker: 'WHERE (ENTRY FOOTHOLD)',
+          value: 'vpn-bastion (victim:2222)',
+          detail: 'Perimeter Gateway vulnerable to CVE-2024-3400',
+          accent: '',
+        },
+        {
+          kicker: 'IMPACT ON CROWN JEWELS',
+          value: '11 Lateral Paths Exposed',
+          detail: 'Direct reachable path to Production Database (prod-db)',
+          accent: 'critical',
+        },
+      ]
 
   // Concise 4-step incident progression
-  const incidentSteps = [
-    {
-      step: '01',
-      title: 'Credential Brute-Force Activity',
-      time: '17:25:23 UTC',
-      detail: 'Wazuh EDR detected 3 rapid password guessing attempts on port 2222 from source IP 172.18.0.5.',
-      badge: 'SSH Log Ingress',
-    },
-    {
-      step: '02',
-      title: 'Unauthorized Session Established',
-      time: '17:25:24 UTC',
-      detail: 'Attacker successfully authenticated as user "demo" on vpn-bastion. EDR emitted Severity 9/10 alert.',
-      badge: 'Breach Confirmed',
-    },
-    {
-      step: '03',
-      title: 'Attack Graph Lateral Correlation',
-      time: '17:25:25 UTC',
-      detail: 'NetworkX graph correlated compromised host: 11 active paths lead to Production Database (prod-db) and Vault.',
-      badge: 'Graph Analysis',
-    },
-    {
-      step: '04',
-      title: 'Perimeter Vulnerability Identified',
-      time: '17:25:26 UTC',
-      detail: 'Matched unpatched CVE-2024-3400 (Remote Code Execution) on vpn-bastion. Human-in-the-loop containment proposed.',
-      badge: 'Mitigation Ready',
-    },
-  ]
+  const incidentSteps = isWebAttack
+    ? [
+        {
+          step: '01',
+          title: 'Suspicious HTTP Request Ingress',
+          time: '17:25:23 UTC',
+          detail: "Detector observed anomalous requests on port 8080 containing SQLi (' OR 1=1) and traversal (../) sequences.",
+          badge: 'Web Log Ingress',
+          host: 'web-portal',
+        },
+        {
+          step: '02',
+          title: 'Exploit Signature Verified',
+          time: '17:25:24 UTC',
+          detail: 'EDR rule web_sqli_injection_attempt triggered on host web-portal. Severity 8/10 emitted to SentinelGraph.',
+          badge: 'Breach Confirmed',
+          host: 'web-portal',
+        },
+        {
+          step: '03',
+          title: 'Attack Graph Lateral Correlation',
+          time: '17:25:25 UTC',
+          detail: 'NetworkX graph correlated entry node web-portal: lateral edges expose IAM App Admin Role and Production Database.',
+          badge: 'Graph Analysis',
+          host: 'web-portal',
+        },
+        {
+          step: '04',
+          title: 'Perimeter Vulnerability Identified',
+          time: '17:25:26 UTC',
+          detail: 'Matched unpatched CVE-2021-44228 (Log4j2 RCE) on web-portal. Human-in-the-loop containment proposed.',
+          badge: 'Mitigation Ready',
+          host: 'web-portal',
+        },
+      ]
+    : [
+        {
+          step: '01',
+          title: 'Credential Brute-Force Activity',
+          time: '17:25:23 UTC',
+          detail: 'Wazuh EDR detected 3 rapid password guessing attempts on port 2222 from source IP 172.18.0.5.',
+          badge: 'SSH Log Ingress',
+          host: 'vpn-bastion',
+        },
+        {
+          step: '02',
+          title: 'Unauthorized Session Established',
+          time: '17:25:24 UTC',
+          detail: 'Attacker successfully authenticated as user "demo" on vpn-bastion. EDR emitted Severity 9/10 alert.',
+          badge: 'Breach Confirmed',
+          host: 'vpn-bastion',
+        },
+        {
+          step: '03',
+          title: 'Attack Graph Lateral Correlation',
+          time: '17:25:25 UTC',
+          detail: 'NetworkX graph correlated compromised host: 11 active paths lead to Production Database (prod-db) and Vault.',
+          badge: 'Graph Analysis',
+          host: 'vpn-bastion',
+        },
+        {
+          step: '04',
+          title: 'Perimeter Vulnerability Identified',
+          time: '17:25:26 UTC',
+          detail: 'Matched unpatched CVE-2024-3400 (Remote Code Execution) on vpn-bastion. Human-in-the-loop containment proposed.',
+          badge: 'Mitigation Ready',
+          host: 'vpn-bastion',
+        },
+      ]
 
   return (
     <section className="content-stack">
@@ -890,12 +1009,15 @@ function InvestigationScreen({ investigation, alerts, onTrigger, triggering }) {
           <p>
             {latestAlert
               ? `Active investigation on ${latestAlert.source_host} triggered by ${latestAlert.rule}. Autonomous agent verified evidence without AI hallucination.`
-              : 'Sensors active. Ingest an alert or click "Simulate Threat Ingress" to start the autonomous investigation.'}
+              : 'Sensors active. Ingest an alert or click a simulation button to start the autonomous investigation.'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <button className="trigger-btn" onClick={onTrigger} disabled={triggering}>
-            {triggering ? 'Simulating Threat…' : '⚡ Simulate Threat Ingress'}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button className="trigger-btn" onClick={() => onTrigger('web')} disabled={triggering} style={{ borderColor: '#d97706', color: '#b45309' }}>
+            {triggering ? 'Simulating…' : '🌐 Web Exploit Trigger'}
+          </button>
+          <button className="trigger-btn" onClick={() => onTrigger('ssh')} disabled={triggering}>
+            {triggering ? 'Simulating…' : '⚡ SSH Breach Trigger'}
           </button>
           <span className={`formula-badge ${investigation.status === 'complete' || alerts.length > 0 ? 'complete-badge' : ''}`}>
             {investigation.status === 'complete' || alerts.length > 0 ? 'Verdict Ready' : 'Awaiting Ingress'}
@@ -936,7 +1058,7 @@ function InvestigationScreen({ investigation, alerts, onTrigger, triggering }) {
                   <p>{event.detail}</p>
                   <div className="evidence-row">
                     <span className="evidence-pill mono">{event.time}</span>
-                    <span className="evidence-pill mono">Host: vpn-bastion</span>
+                    <span className="evidence-pill mono">Host: {event.host || (isWebAttack ? 'web-portal' : 'vpn-bastion')}</span>
                   </div>
                 </div>
               </div>
@@ -944,7 +1066,7 @@ function InvestigationScreen({ investigation, alerts, onTrigger, triggering }) {
           ) : (
             <div className="empty-investigation">
               <div className="empty-cross">◎</div>
-              <p>No investigation currently active. Trigger the Docker container to launch live intrusion analysis.</p>
+              <p>No investigation currently active. Trigger a simulated attack to launch live intrusion analysis.</p>
             </div>
           )}
         </div>
@@ -967,25 +1089,48 @@ function InvestigationScreen({ investigation, alerts, onTrigger, triggering }) {
               <div className="panel-divider" />
               <div className="panel-kicker">INCIDENT SUMMARY FINDINGS</div>
               <div className="claim-list">
-                <div className="claim">
-                  <p>External IP 172.18.0.5 successfully breached SSH service on vpn-bastion after 3 failed brute-force attempts.</p>
-                  <div className="evidence-row">
-                    <span className="evidence-pill mono">log-telemetry</span>
-                    <span className="evidence-pill mono">auth_success</span>
-                  </div>
-                </div>
-                <div className="claim">
-                  <p>Compromised asset sits on 11 attack paths with direct lateral pivot potential to Production Database.</p>
-                  <div className="evidence-row">
-                    <span className="evidence-pill mono">graph-path-01</span>
-                    <span className="evidence-pill mono">crown-jewel</span>
-                  </div>
-                </div>
+                {isWebAttack ? (
+                  <>
+                    <div className="claim">
+                      <p>External IP 172.18.0.5 delivered SQL injection (' OR 1=1) and path traversal (../) payloads against web-portal.</p>
+                      <div className="evidence-row">
+                        <span className="evidence-pill mono">log-telemetry</span>
+                        <span className="evidence-pill mono">web_exploit</span>
+                      </div>
+                    </div>
+                    <div className="claim">
+                      <p>Compromised web-portal serves as ingress entry point with lateral path to Production Database.</p>
+                      <div className="evidence-row">
+                        <span className="evidence-pill mono">graph-path</span>
+                        <span className="evidence-pill mono">crown-jewel</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="claim">
+                      <p>External IP 172.18.0.5 successfully breached SSH service on vpn-bastion after 3 failed brute-force attempts.</p>
+                      <div className="evidence-row">
+                        <span className="evidence-pill mono">log-telemetry</span>
+                        <span className="evidence-pill mono">auth_success</span>
+                      </div>
+                    </div>
+                    <div className="claim">
+                      <p>Compromised asset sits on 11 attack paths with direct lateral pivot potential to Production Database.</p>
+                      <div className="evidence-row">
+                        <span className="evidence-pill mono">graph-path-01</span>
+                        <span className="evidence-pill mono">crown-jewel</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
               <div className="panel-divider" />
               <div className="panel-kicker">RECOMMENDED CONTAINMENT ACTION</div>
               <p className="recommendation">
-                Immediately isolate vpn-bastion at perimeter edge router, block source IP 172.18.0.5, and rotate compromised credentials.
+                {isWebAttack
+                  ? 'Immediately deploy perimeter WAF rule blocking 172.18.0.5, isolate web-portal container at perimeter edge, and patch CVE-2021-44228.'
+                  : 'Immediately isolate vpn-bastion at perimeter edge router, block source IP 172.18.0.5, and rotate compromised credentials.'}
               </p>
               <button
                 className={`approve-action ${mitigationAuthorized ? 'authorized' : ''}`}
@@ -997,7 +1142,7 @@ function InvestigationScreen({ investigation, alerts, onTrigger, triggering }) {
               </button>
               {mitigationAuthorized && (
                 <div className="mitigation-success">
-                  <span>✓</span> Perimeter edge firewall rule committed: Ingress threat source blocked, credentials revoked.
+                  <span>✓</span> Perimeter firewall rule committed: Ingress threat source blocked, containment active.
                 </div>
               )}
               <div className="coverage-note">

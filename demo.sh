@@ -57,10 +57,13 @@ if [ "$READY" -ne 1 ]; then
 fi
 echo "      Platform is online and ready to receive alerts."
 
+SCENARIO="${1:-web}"
+echo "Scenario selected: $SCENARIO"
+
 # Step 3: Run the simulated attack strictly inside the isolated Docker network
 echo ""
-echo "[3/4] Triggering safe simulated attack against victim:2222..."
-if ! $DOCKER_CMD compose --progress=plain --profile demo run --rm attacker; then
+echo "[3/4] Triggering safe simulated attack scenario '$SCENARIO' against victim..."
+if ! $DOCKER_CMD compose --progress=plain --profile demo run --rm -e ATTACK_SCENARIO="$SCENARIO" attacker; then
   echo "[!] Error: Failed to run simulated attacker container."
   exit 1
 fi

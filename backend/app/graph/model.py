@@ -145,6 +145,7 @@ class SyntheticLab:
 
         self._add_edge("internet", "edge-gateway", "CAN_REACH", port=443)
         self._add_edge("edge-gateway", "vpn-bastion", "CAN_REACH", port=22)
+        self._add_edge("edge-gateway", "web-portal", "CAN_REACH", port=8080)
         self._add_edge("edge-gateway", "intern-laptop", "CAN_REACH", port=445)
         self._add_edge("vpn-bastion", "web-portal", "CAN_REACH", port=8080)
         self._add_edge("vpn-bastion", "admin-role", "CAN_ASSUME", reason="CVE-2024-3400")

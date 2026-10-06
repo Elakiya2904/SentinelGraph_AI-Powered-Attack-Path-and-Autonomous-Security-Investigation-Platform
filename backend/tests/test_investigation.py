@@ -48,3 +48,27 @@ def test_investigation_emits_confirmed_evidence_backed_verdict() -> None:
     assert all(claim["evidence_ids"] for claim in verdict["claims"])
     assert any(event["kind"] == "tool_call" and event["tool"] == "lookup_cve" for event in events)
     assert events[-1]["kind"] == "verdict"
+
+
+def test_investigation_emits_verdict_for_web_portal_attack() -> None:
+    investigator = ToolGroundedInvestigator(SyntheticLab())
+    events = []
+
+    async def emit(event):
+        events.append(event)
+
+    alert = {
+        "alert_id": "alert-web-001",
+        "source_host": "web-portal",
+        "rule": "web_sqli_injection_attempt",
+        "severity": 8,
+    }
+    result = asyncio.run(investigator.run(alert, emit, "investigation-web-test"))
+    verdict = result["verdict"]
+    assert verdict["state"] == "confirmed attack"
+    assert verdict["evidence_coverage"] == 1.0
+    assert "web-portal" in verdict["recommended_action"]
+    assert any("SQL injection" in claim["claim"] for claim in verdict["claims"])
+    assert any(event["kind"] == "tool_call" and event["tool"] == "lookup_cve" for event in events)
+    assert events[-1]["kind"] == "verdict"
+

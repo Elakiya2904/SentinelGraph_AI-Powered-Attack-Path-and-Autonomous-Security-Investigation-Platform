@@ -90,4 +90,32 @@ ATTACK_TECHNIQUES = {
         "evidence_id": "attack-t1110",
         "summary": "Successful authentication achieved following repeated credential brute force attempts.",
     },
+    "web_sqli_injection_attempt": {
+        "id": "T1190",
+        "name": "Exploit Public-Facing Application (SQLi)",
+        "tactic": "Initial Access",
+        "evidence_id": "attack-t1190-sqli",
+        "summary": "SQL injection payload (' OR 1=1) targeting public-facing web portal input parameters.",
+    },
+    "web_path_traversal_attempt": {
+        "id": "T1190",
+        "name": "Exploit Public-Facing Application (Directory Traversal)",
+        "tactic": "Initial Access",
+        "evidence_id": "attack-t1190-traversal",
+        "summary": "Path traversal sequence (../) targeting server filesystem boundaries.",
+    },
+    "web_exploit_attempt": {
+        "id": "T1190",
+        "name": "Exploit Public-Facing Application",
+        "tactic": "Initial Access",
+        "evidence_id": "attack-t1190",
+        "summary": "Exploitation attempt against public-facing web portal service.",
+    },
+    "web_request_observed": {
+        "id": "T1046",
+        "name": "Network Service Discovery",
+        "tactic": "Discovery",
+        "evidence_id": "attack-t1046",
+        "summary": "Perimeter HTTP service request observed by edge sensor.",
+    },
 }

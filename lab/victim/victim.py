@@ -37,20 +37,45 @@ class SSHLikeHandler(StreamRequestHandler):
         self.wfile.flush()
 
 
+import urllib.parse
+
+
 class WebHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
+        self._handle_request()
+
+    def do_POST(self) -> None:
+        self._handle_request()
+
+    def do_HEAD(self) -> None:
+        self._handle_request()
+
+    def _handle_request(self) -> None:
+        peer = self.client_address[0]
+        decoded_path = urllib.parse.unquote(self.path)
+        write_log(f"WEB_REQUEST client={peer} method={self.command} path={decoded_path} raw_path={self.path}")
+
         if self.path == "/health":
-            body = b"victim-ok"
-            self.send_response(200)
+            body = b"victim-ok\n"
+            status = 200
+        elif "' OR 1=1" in decoded_path or "1=1" in decoded_path or "UNION SELECT" in decoded_path.upper():
+            body = b"HTTP 500 Internal Server Error: SQL syntax error near 'OR 1=1'\n"
+            status = 500
+        elif "../" in decoded_path or "..\\" in decoded_path:
+            body = b"root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n"
+            status = 200
         else:
-            body = b"SentinelGraph isolated victim web surface"
-            self.send_response(200)
+            body = b"SentinelGraph isolated victim web surface\n"
+            status = 200
+
+        self.send_response(status)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
         self.end_headers()
         self.wfile.write(body)
 
     def log_message(self, format: str, *args: object) -> None:
-        write_log(f"WEB_REQUEST client={self.client_address[0]} path={self.path}")
+        pass
 
 
 if __name__ == "__main__":
